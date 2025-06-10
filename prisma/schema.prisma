@@ -26,37 +26,101 @@ enum Difficulty {
 }
 
 model User {
-  id String @id @default(uuid())
-  name String?
-  email String @unique
-  image String?
-  role UserRole @default(USER)
-  password String
+  id        String   @id @default(uuid())
+  name      String?
+  email     String   @unique
+  image     String?
+  role      UserRole @default(USER)
+  password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  problems Problem[]
+  problems      Problem[]
+  submission    Submission[]
+  problemSolved ProblemSolved[]
 }
 
 model Problem {
-  id String @id @default(uuid())
-  title String
-  description String
-  difficulty Difficulty
-  tags String[]  // ["tag1", "tag2", "tag3"]
-  userId String // who create this problem
-  examples Json
-  constraints String
-  hints String?
-  editorial String?
-
-  testcases Json //[{"input": "1" , "output": "1"}, {"input": "2" , "output": "2"}]
-  codeSnippets Json
+  id                 String     @id @default(uuid())
+  title              String
+  description        String
+  difficulty         Difficulty
+  tags               String[] // ["tag1", "tag2", "tag3"]
+  userId             String // who create this problem
+  examples           Json
+  constraints        String
+  hints              String?
+  editorial          String?
+  testcases          Json //[{"input": "1" , "output": "1"}, {"input": "2" , "output": "2"}]
+  codeSnippets       Json
   referenceSolutions Json
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   //Relationship
-  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  submission Submission[]
+  solvedBy   ProblemSolved[]
+}
+
+model Submission {
+  id            String  @id @default(uuid())
+  userId        String
+  problemId     String
+  sourceCode    Json
+  language      String
+  stdin         String?
+  stdout        String
+  compileOutput String?
+  status        String //Accepted, wrong answer
+  memory        String?
+  time          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relationship
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  testcases Testcases[]
+}
+
+model Testcases {
+  id            String  @id @default(uuid())
+  submissionId  String
+  testCase      Int
+  passed        Boolean
+  stdout        String?
+  expected      String
+  stderr        String?
+  compileOutput String?
+  status        String
+  memory        String?
+  time          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relationship
+  submission Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+}
+
+model ProblemSolved {
+  id        String @id @default(uuid())
+  userId    String
+  problemId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  //Relationship
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, problemId])
 }
